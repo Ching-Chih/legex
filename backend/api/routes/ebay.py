@@ -2,6 +2,8 @@
 import os
 import hashlib
 from flask import Blueprint, request, jsonify
+import requests
+from backend.api.services.ebay_auth import get_ebay_token
 
 ebay_bp = Blueprint("ebay", __name__)
 
@@ -28,3 +30,18 @@ def ebay_account_deletion():
     data = request.get_json(silent=True) or {}
     print("eBay account deletion notification:", data)
     return ("", 204)
+
+
+@ebay_bp.route("/api/ebay/test-search")
+def ebay_test_search():
+    token = get_ebay_token()
+
+    url = "https://api.ebay.com/buy/browse/v1/item_summary/search?q=lego"
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    return jsonify(response.json())
