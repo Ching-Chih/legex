@@ -255,3 +255,8 @@ def get_stored_listings():
 
     finally:
         db.close()
+
+
+@ebay_bp.route("/api/version-test")
+def version_test():
+    return {"status": "ok", "version": "after-filter-change"}
