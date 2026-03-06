@@ -6,8 +6,8 @@ import requests
 import re
 from backend.api.services.ebay_auth import get_ebay_token
 
-from backend.db import SessionLocal
-from backend.models import ListingSnapshot
+from backend.db import SessionLocal, engine
+from backend.models import ListingSnapshot, Base
 from datetime import datetime
 
 
@@ -280,3 +280,14 @@ def db_clear_listings():
         })
     finally:
         db.close()
+
+
+@ebay_bp.route("/api/db-reset-listings")
+def db_reset_listings():
+    ListingSnapshot._table_.drop(bind=engine, checkfirst=True)
+    ListingSnapshot._table_.create(bind=engine, checkfirst=True)
+
+    return jsonify({
+        "status": "ok",
+        "message": "listing_snapshots table reset"
+    })

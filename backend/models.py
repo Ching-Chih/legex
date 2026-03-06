@@ -8,6 +8,7 @@ class ListingSnapshot(Base):
     id = Column(Integer, primary_key=True, index=True)
     source = Column(String, nullable=False)          # e.g. "ebay"
     item_id = Column(String, nullable=False, index=True)
+    set_num = Column(String, nullable=True, index=True)
     title = Column(String, nullable=False)
     price = Column(Float, nullable=False)
     currency = Column(String, nullable=False)
