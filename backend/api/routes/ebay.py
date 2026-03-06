@@ -6,9 +6,12 @@ import requests
 import re
 from backend.api.services.ebay_auth import get_ebay_token
 
-from backend.db import SessionLocal, engine
-from backend.models import ListingSnapshot, Base
+from backend.db import SessionLocal
+from backend.models import ListingSnapshot
 from datetime import datetime
+
+from backend.db import engine
+from backend.models import Base
 
 
 ebay_bp = Blueprint("ebay", __name__)
@@ -284,8 +287,8 @@ def db_clear_listings():
 
 @ebay_bp.route("/api/db-reset-listings")
 def db_reset_listings():
-    ListingSnapshot._table_.drop(bind=engine, checkfirst=True)
-    ListingSnapshot._table_.create(bind=engine, checkfirst=True)
+    ListingSnapshot.__table__.drop(bind=engine, checkfirst=True)
+    ListingSnapshot.__table__.create(bind=engine, checkfirst=True)
 
     return jsonify({
         "status": "ok",
