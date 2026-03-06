@@ -191,6 +191,11 @@ def ebay_store_search():
             if set_num and set_num not in title:
                 continue
 
+            # Skip duplicates already stored
+            existing = db.query(ListingSnapshot).filter_by(item_id=normalized["item_id"]).first()
+            if existing:
+                continue
+
             listed_at_raw = normalized["listed_at"]
             listed_at = None
             if listed_at_raw:
