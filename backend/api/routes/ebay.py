@@ -95,10 +95,11 @@ def db_insert_test():
         db.close()
 
 
-def normalize_ebay_item(item):
+def normalize_ebay_item(item, set_num=None):
     return {
         "source": "ebay",
         "item_id": item.get("itemId"),
+        "set_num": set_num,
         "title": item.get("title"),
         "price": float(item.get("price", {}).get("value", 0)),
         "currency": item.get("price", {}).get("currency"),
@@ -178,7 +179,7 @@ def ebay_store_search():
 
     try:
         for item in items:
-            normalized = normalize_ebay_item(item)
+            normalized = normalize_ebay_item(item, set_num=set_num)
 
             # Skip bad/incomplete rows
             if not normalized["item_id"] or not normalized["title"]:
@@ -207,6 +208,7 @@ def ebay_store_search():
             row = ListingSnapshot(
                 source=normalized["source"],
                 item_id=normalized["item_id"],
+                set_num=normalized["set_num"],
                 title=normalized["title"],
                 price=normalized["price"],
                 currency=normalized["currency"],
@@ -247,6 +249,7 @@ def get_stored_listings():
                 "id": row.id,
                 "source": row.source,
                 "item_id": row.item_id,
+                "set_num": row.set_num,
                 "title": row.title,
                 "price": row.price,
                 "currency": row.currency,
