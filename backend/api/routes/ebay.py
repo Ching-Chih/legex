@@ -5,6 +5,11 @@ from flask import Blueprint, request, jsonify
 import requests
 from backend.api.services.ebay_auth import get_ebay_token
 
+from flask import jsonify
+from backend.db import SessionLocal
+from backend.models import ListingSnapshot
+
+
 ebay_bp = Blueprint("ebay", __name__)
 
 
@@ -45,3 +50,16 @@ def ebay_test_search():
     response = requests.get(url, headers=headers)
 
     return jsonify(response.json())
+
+
+@ebay_bp.route("/api/db-test")
+def db_test():
+    db = SessionLocal()
+    try:
+        count = db.query(ListingSnapshot).count()
+        return jsonify({
+            "status": "ok",
+            "listing_snapshots_count": count
+        })
+    finally:
+        db.close()

@@ -1,6 +1,8 @@
 from flask import Flask, jsonify
 from backend.api.routes.sets import sets_bp
 from backend.api.routes.ebay import ebay_bp
+from backend.db import engine
+from backend.models import Base
 
 
 app = Flask(__name__)
@@ -14,6 +16,7 @@ def health():
 
 app.register_blueprint(ebay_bp)
 
+Base.metadata.create_all(bind=engine)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
