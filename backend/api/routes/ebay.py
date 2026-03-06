@@ -8,6 +8,8 @@ from backend.api.services.ebay_auth import get_ebay_token
 from flask import jsonify
 from backend.db import SessionLocal
 from backend.models import ListingSnapshot
+from datetime import datetime
+
 
 
 ebay_bp = Blueprint("ebay", __name__)
@@ -60,6 +62,32 @@ def db_test():
         return jsonify({
             "status": "ok",
             "listing_snapshots_count": count
+        })
+    finally:
+        db.close()
+
+
+@ebay_bp.route("/api/db-insert-test")
+def db_insert_test():
+    db = SessionLocal()
+    try:
+        test_row = ListingSnapshot(
+            source="ebay",
+            item_id="test-item-123",
+            title="Test LEGO Listing",
+            price=99.99,
+            currency="USD",
+            condition="New",
+            marketplace="EBAY_US",
+            listed_at=datetime.utcnow()
+        )
+
+        db.add(test_row)
+        db.commit()
+
+        return jsonify({
+            "status": "ok",
+            "message": "Test row inserted"
         })
     finally:
         db.close()
