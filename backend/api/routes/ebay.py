@@ -5,11 +5,9 @@ from flask import Blueprint, request, jsonify
 import requests
 from backend.api.services.ebay_auth import get_ebay_token
 
-from flask import jsonify
 from backend.db import SessionLocal
 from backend.models import ListingSnapshot
 from datetime import datetime
-
 
 
 ebay_bp = Blueprint("ebay", __name__)
@@ -89,5 +87,84 @@ def db_insert_test():
             "status": "ok",
             "message": "Test row inserted"
         })
+    finally:
+        db.close()
+
+
+def normalize_ebay_item(item):
+    return {
+        "source": "ebay",
+        "item_id": item.get("itemId"),
+        "title": item.get("title"),
+        "price": float(item.get("price", {}).get("value", 0)),
+        "currency": item.get("price", {}).get("currency"),
+        "condition": item.get("condition"),
+        "marketplace": item.get("listingMarketplaceId"),
+        "listed_at": item.get("itemCreationDate")
+    }
+
+
+@ebay_bp.route("/api/ebay/store-search")
+def ebay_store_search():
+    query = request.args.get("q", "").strip()
+
+    if not query:
+        return jsonify({"status": "error", "message": "Missing query parameter 'q'"}), 400
+
+    token = get_ebay_token()
+
+    url = "https://api.ebay.com/buy/browse/v1/item_summary/search"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    params = {
+        "q": query,
+        "limit": 20
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+
+    data = response.json()
+    items = data.get("itemSummaries", [])
+
+    db = SessionLocal()
+    inserted = 0
+
+    try:
+        for item in items:
+            normalized = normalize_ebay_item(item)
+
+            # Skip bad/incomplete rows
+            if not normalized["item_id"] or not normalized["title"]:
+                continue
+
+            listed_at_raw = normalized["listed_at"]
+            listed_at = None
+            if listed_at_raw:
+                listed_at = datetime.fromisoformat(listed_at_raw.replace("Z", "+00:00"))
+
+            row = ListingSnapshot(
+                source=normalized["source"],
+                item_id=normalized["item_id"],
+                title=normalized["title"],
+                price=normalized["price"],
+                currency=normalized["currency"],
+                condition=normalized["condition"],
+                marketplace=normalized["marketplace"],
+                listed_at=listed_at
+            )
+
+            db.add(row)
+            inserted += 1
+
+        db.commit()
+
+        return jsonify({
+            "status": "ok",
+            "query": query,
+            "inserted": inserted
+        })
+
     finally:
         db.close()
