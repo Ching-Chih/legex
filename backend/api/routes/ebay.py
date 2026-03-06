@@ -3,6 +3,7 @@ import os
 import hashlib
 from flask import Blueprint, request, jsonify
 import requests
+import re
 from backend.api.services.ebay_auth import get_ebay_token
 
 from backend.db import SessionLocal
@@ -104,9 +105,50 @@ def normalize_ebay_item(item):
     }
 
 
+def is_bad_listing(title: str) -> bool:
+    if not title:
+        return True
+
+    title_lower = title.lower()
+
+    bad_words = [
+        "replica",
+        "display case",
+        "instruction",
+        "instructions",
+        "manual",
+        "book",
+        "moc",
+        "custom",
+        "bulk",
+        "lot",
+        "pdf",
+        "replacement stickers",
+        "sticker sheet",
+        "light kit",
+        "led kit",
+        "remote control",
+        "sound kit"
+    ]
+
+    return any(word in title_lower for word in bad_words)
+
+
+def extract_set_num_from_query(query: str) -> str | None:
+    if not query:
+        return None
+
+    match = re.search(r"\b\d{4,6}\b", query)
+    if match:
+        return match.group(0)
+
+    return None
+
+
 @ebay_bp.route("/api/ebay/store-search")
 def ebay_store_search():
     query = request.args.get("q", "").strip()
+    set_num = extract_set_num_from_query(query)
 
     if not query:
         return jsonify({"status": "error", "message": "Missing query parameter 'q'"}), 400
@@ -137,6 +179,16 @@ def ebay_store_search():
 
             # Skip bad/incomplete rows
             if not normalized["item_id"] or not normalized["title"]:
+                continue
+
+            title = normalized["title"]
+
+            # Skip obvious noisy listings
+            if is_bad_listing(title):
+                continue
+
+            # If query includes a LEGO set number, require it in the title
+            if set_num and set_num not in title:
                 continue
 
             listed_at_raw = normalized["listed_at"]
