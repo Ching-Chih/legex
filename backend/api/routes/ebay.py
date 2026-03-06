@@ -168,3 +168,38 @@ def ebay_store_search():
 
     finally:
         db.close()
+
+
+@ebay_bp.route("/api/listings")
+def get_stored_listings():
+    query = request.args.get("q", "").strip().lower()
+
+    db = SessionLocal()
+    try:
+        rows = db.query(ListingSnapshot).all()
+
+        results = []
+        for row in rows:
+            if query and query not in row.title.lower():
+                continue
+
+            results.append({
+                "id": row.id,
+                "source": row.source,
+                "item_id": row.item_id,
+                "title": row.title,
+                "price": row.price,
+                "currency": row.currency,
+                "condition": row.condition,
+                "marketplace": row.marketplace,
+                "listed_at": row.listed_at.isoformat() if row.listed_at else None
+            })
+
+        return jsonify({
+            "status": "ok",
+            "count": len(results),
+            "items": results
+        })
+
+    finally:
+        db.close()
