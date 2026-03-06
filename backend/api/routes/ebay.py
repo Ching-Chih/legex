@@ -260,3 +260,18 @@ def get_stored_listings():
 @ebay_bp.route("/api/version-test")
 def version_test():
     return {"status": "ok", "version": "after-filter-change"}
+
+
+@ebay_bp.route("/api/db-clear-listings")
+def db_clear_listings():
+    db = SessionLocal()
+    try:
+        deleted_count = db.query(ListingSnapshot).delete()
+        db.commit()
+
+        return jsonify({
+            "status": "ok",
+            "deleted": deleted_count
+        })
+    finally:
+        db.close()
