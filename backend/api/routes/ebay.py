@@ -362,3 +362,35 @@ def get_set_analytics(set_num):
         })
     finally:
         db.close()
+
+
+@ebay_bp.route("/api/history/set/<set_num>")
+def get_set_price_history(set_num):
+    db = SessionLocal()
+    try:
+        rows = db.query(
+            ListingSnapshot.listed_at,
+            ListingSnapshot.price
+        ).filter(
+            ListingSnapshot.set_num == set_num
+        ).order_by(
+            ListingSnapshot.listed_at
+        ).all()
+
+        points = []
+
+        for listed_at, price in rows:
+            if listed_at and price:
+                points.append({
+                    "date": listed_at.date().isoformat(),
+                    "price": float(price)
+                })
+
+        return jsonify({
+            "status": "ok",
+            "set_num": set_num,
+            "points": points
+        })
+
+    finally:
+        db.close()
