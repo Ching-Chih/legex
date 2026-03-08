@@ -394,3 +394,49 @@ def get_set_price_history(set_num):
 
     finally:
         db.close()
+
+
+@ebay_bp.route("/api/history/set/<set_num>/daily")
+def get_set_daily_history(set_num):
+    db = SessionLocal()
+    try:
+        rows = db.query(
+            ListingSnapshot.listed_at,
+            ListingSnapshot.price
+        ).filter(
+            ListingSnapshot.set_num == set_num
+        ).all()
+
+        grouped = {}
+
+        for listed_at, price in rows:
+            if not listed_at or price is None:
+                continue
+
+            day = listed_at.date().isoformat()
+
+            if day not in grouped:
+                grouped[day] = []
+
+            grouped[day].append(float(price))
+
+        points = []
+
+        for day in sorted(grouped.keys()):
+            prices = grouped[day]
+            avg_price = sum(prices) / len(prices)
+
+            points.append({
+                "date": day,
+                "average_price": round(avg_price, 2),
+                "listing_count": len(prices)
+            })
+
+        return jsonify({
+            "status": "ok",
+            "set_num": set_num,
+            "points": points
+        })
+
+    finally:
+        db.close()
