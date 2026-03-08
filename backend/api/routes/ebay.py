@@ -334,14 +334,31 @@ def get_set_analytics(set_num):
             mid2 = prices[listing_count // 2]
             median_price = (mid1 + mid2) / 2
 
+        # remove extreme low outliers (less than 30% of median)
+        filtered_prices = [p for p in prices if p >= median_price * 0.3]
+
+        filtered_count = len(filtered_prices)
+
+        if filtered_count > 0:
+            filtered_avg = sum(filtered_prices) / filtered_count
+            filtered_min = min(filtered_prices)
+            filtered_max = max(filtered_prices)
+        else:
+            filtered_avg = None
+            filtered_min = None
+            filtered_max = None
+
         return jsonify({
             "status": "ok",
             "set_num": set_num,
             "listing_count": listing_count,
-            "average_price": round(average_price, 2),
             "median_price": round(median_price, 2),
-            "min_price": min_price,
-            "max_price": max_price
+            "average_price": round(average_price, 2),
+            "filtered_average_price": round(filtered_avg, 2) if filtered_avg else None,
+            "filtered_min_price": filtered_min,
+            "filtered_max_price": filtered_max,
+            "max_price": max_price,
+            "min_price": min_price
         })
     finally:
         db.close()
