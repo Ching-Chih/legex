@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 from backend.api.routes.sets import sets_bp
 from backend.api.routes.ebay import ebay_bp
 from backend.db import engine
@@ -6,6 +7,8 @@ from backend.models import Base
 
 
 app = Flask(__name__)
+CORS(app)
+
 app.register_blueprint(sets_bp)
 
 
