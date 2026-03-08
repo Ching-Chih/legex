@@ -304,24 +304,44 @@ def db_reset_listings():
 def get_set_analytics(set_num):
     db = SessionLocal()
     try:
-        result = db.query(
-            func.count(ListingSnapshot.id),
-            func.avg(ListingSnapshot.price),
-            func.min(ListingSnapshot.price),
-            func.max(ListingSnapshot.price)
-        ).filter(
+        rows = db.query(ListingSnapshot.price).filter(
             ListingSnapshot.set_num == set_num
-        ).one()
+        ).all()
 
-        count, avg_price, min_price, max_price = result
+        prices = sorted([float(row[0]) for row in rows if row[0] is not None])
+
+        listing_count = len(prices)
+
+        if listing_count == 0:
+            return jsonify({
+                "status": "ok",
+                "set_num": set_num,
+                "listing_count": 0,
+                "average_price": None,
+                "median_price": None,
+                "min_price": None,
+                "max_price": None
+            })
+
+        average_price = sum(prices) / listing_count
+        min_price = min(prices)
+        max_price = max(prices)
+
+        if listing_count % 2 == 1:
+            median_price = prices[listing_count // 2]
+        else:
+            mid1 = prices[(listing_count // 2) - 1]
+            mid2 = prices[listing_count // 2]
+            median_price = (mid1 + mid2) / 2
 
         return jsonify({
             "status": "ok",
             "set_num": set_num,
-            "listing_count": count or 0,
-            "average_price": round(float(avg_price), 2) if avg_price is not None else None,
-            "min_price": float(min_price) if min_price is not None else None,
-            "max_price": float(max_price) if max_price is not None else None
+            "listing_count": listing_count,
+            "average_price": round(average_price, 2),
+            "median_price": round(median_price, 2),
+            "min_price": min_price,
+            "max_price": max_price
         })
     finally:
         db.close()
