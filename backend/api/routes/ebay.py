@@ -423,15 +423,23 @@ def get_set_daily_history(set_num):
         points = []
 
         for day in sorted(grouped.keys()):
-            prices = grouped[day]
-            avg_price = sum(prices) / len(prices)
+            prices = sorted(grouped[day])
+            count = len(prices)
+            avg_price = sum(prices) / count
+
+            if count % 2 == 1:
+                median_price = prices[count // 2]
+            else:
+                mid1 = prices[(count // 2) - 1]
+                mid2 = prices[count // 2]
+                median_price = (mid1 + mid2) / 2
 
             points.append({
                 "date": day,
                 "average_price": round(avg_price, 2),
-                "listing_count": len(prices)
+                "median_price": round(median_price, 2),
+                "listing_count": count
             })
-
         return jsonify({
             "status": "ok",
             "set_num": set_num,
