@@ -12,6 +12,7 @@ from datetime import datetime
 
 from backend.db import engine
 from backend.models import Base
+from sqlalchemy import func
 
 
 ebay_bp = Blueprint("ebay", __name__)
@@ -297,3 +298,30 @@ def db_reset_listings():
         "status": "ok",
         "message": "listing_snapshots table reset"
     })
+
+
+@ebay_bp.route("/api/analytics/set/<set_num>")
+def get_set_analytics(set_num):
+    db = SessionLocal()
+    try:
+        result = db.query(
+            func.count(ListingSnapshot.id),
+            func.avg(ListingSnapshot.price),
+            func.min(ListingSnapshot.price),
+            func.max(ListingSnapshot.price)
+        ).filter(
+            ListingSnapshot.set_num == set_num
+        ).one()
+
+        count, avg_price, min_price, max_price = result
+
+        return jsonify({
+            "status": "ok",
+            "set_num": set_num,
+            "listing_count": count or 0,
+            "average_price": round(float(avg_price), 2) if avg_price is not None else None,
+            "min_price": float(min_price) if min_price is not None else None,
+            "max_price": float(max_price) if max_price is not None else None
+        })
+    finally:
+        db.close()
