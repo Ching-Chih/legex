@@ -272,8 +272,8 @@ export default function Home() {
                 <YAxis />
                 <Tooltip
                   labelFormatter={(label) => formatDate(label as string)}
-                  formatter={(value: number) => formatPrice(Number(value))}
-                />
+                  formatter={(value) => formatPrice(Number(value ?? 0))}
+                 />
                 <Legend />
                 <Line type="monotone" dataKey="average_price" name="Average Price" />
                 <Line type="monotone" dataKey="median_price" name="Median Price" />
