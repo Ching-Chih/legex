@@ -115,6 +115,22 @@ export default function Home() {
         margin: "0 auto",
       }}
     >
+      <h1 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+        LEGO Market Analytics
+      </h1>
+
+      {analytics && (
+        <div
+          style={{
+            marginTop: "0.25rem",
+            marginBottom: "1.25rem",
+            fontSize: "1.4rem",
+            fontWeight: 600,
+          }}
+        >
+          Set {analytics.set_num}
+        </div>
+      )}
       <div
         style={{
           marginBottom: "1.5rem",
